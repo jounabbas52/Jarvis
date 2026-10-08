@@ -1,0 +1,81 @@
+{
+  "name": "jarvis-lite",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Jarvis-Lite: Rule-Based Desktop Assistant (Next.js + Electron)",
+  "author": "Saeed",
+  "main": "electron/main.js",
+  "scripts": {
+    "assets": "node scripts/copy-ort.js && node scripts/build-workers.js",
+    "predev": "npm run assets",
+    "dev": "next dev -p 3000",
+    "prebuild": "npm run assets",
+    "build": "next build",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "selftest": "node scripts/selftest.js",
+    "electron:dev": "concurrently -k \"npm:dev\" \"wait-on tcp:3000 && cross-env NODE_ENV=development electron .\"",
+    "electron:start": "cross-env NODE_ENV=development electron .",
+    "start": "electron .",
+    "app": "npm run build && electron .",
+    "electron:build": "next build && electron-builder",
+    "dist": "npm run electron:build"
+  },
+  "dependencies": {
+    "@google/genai": "^2.24.0",
+    "@huggingface/transformers": "^3.7.5",
+    "jszip": "^3.10.2",
+    "mammoth": "^1.12.3",
+    "next": "14.2.35",
+    "pdf-parse": "^1.1.1",
+    "playwright-core": "^1.63.0",
+    "qrcode": "^1.5.4",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "selfsigned": "^5.5.0",
+    "systeminformation": "^5.33.13",
+    "ws": "^8.21.3",
+    "xlsx": "^0.18.5",
+    "zustand": "4.5.4"
+  },
+  "devDependencies": {
+    "@types/node": "20.14.15",
+    "@types/react": "18.3.3",
+    "@types/react-dom": "18.3.0",
+    "autoprefixer": "10.4.19",
+    "concurrently": "8.2.2",
+    "cross-env": "7.0.3",
+    "electron": "31.3.0",
+    "electron-builder": "24.13.3",
+    "esbuild": "^0.28.2",
+    "postcss": "8.4.40",
+    "tailwindcss": "3.4.7",
+    "typescript": "5.5.4",
+    "wait-on": "7.2.0"
+  },
+  "build": {
+    "appId": "com.jarvislite.app",
+    "productName": "Jarvis Lite",
+    "files": [
+      "out/**/*",
+      "electron/**/*",
+      "package.json"
+    ],
+    "asarUnpack": [
+      "electron/pilot/host.ps1"
+    ],
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "win": {
+      "target": "nsis"
+    },
+    "mac": {
+      "target": "dmg"
+    },
+    "linux": {
+      "target": "AppImage"
+    }
+  }
+}

@@ -1,0 +1,412 @@
+/* Mark LIV floating overlays (setup, customise, plugins, audio, memory,
+   remote, confirm). Colours come from the --mk-* palette MarkHud puts on its
+   root; the --mark-accent fallbacks keep the panels themed if they are ever
+   mounted outside it. Sizes follow Mark's Qt point sizes (1pt ≈ 1.33px). */
+
+.mko-layer {
+  --o-font: 'Courier New', Courier, ui-monospace, monospace;
+  --o-bg: var(--mk-bg, #00060a);
+  --o-panel: var(--mk-panel, #010d14);
+  --o-panel2: var(--mk-panel2, #010f18);
+  --o-border: var(--mk-border, #0d3347);
+  --o-border-b: var(--mk-border-b, #1a5c7a);
+  --o-pri: var(--mk-pri, var(--mark-accent, #00d4ff));
+  --o-pri-dim: var(--mk-pri-dim, #007a99);
+  --o-pri-gho: var(--mk-pri-gho, #001f2e);
+  --o-text: var(--mk-text, #8ffcff);
+  --o-text-dim: var(--mk-text-dim, #3a8a9a);
+  --o-text-med: var(--mk-text-med, #5ab8cc);
+  --o-acc: var(--mk-acc, #ff6b00);
+  --o-acc2: var(--mk-acc2, #ffcc00);
+  --o-green: var(--mk-green, #00ff88);
+  --o-green-d: var(--mk-green-d, #00aa55);
+  --o-red: var(--mk-red, #ff3355);
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  /* Mark's overlays float over a live HUD without dimming it; clicks outside
+     the panel still reach the interface underneath. */
+  pointer-events: none;
+  z-index: 60;
+  font-family: var(--o-font);
+}
+.mko-layer.mko-confirm-layer {
+  z-index: 70;
+}
+.mko-layer *,
+.mko-layer *::before,
+.mko-layer *::after {
+  box-sizing: border-box;
+}
+
+.mko-panel {
+  pointer-events: auto;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  max-height: 100%;
+  background: rgba(0, 6, 10, 0.96);
+  border: 1px solid var(--o-border-b);
+  border-radius: 6px;
+  color: var(--o-text);
+  font-family: var(--o-font);
+  font-size: 10.5px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.55);
+  animation: mko-in 140ms ease-out;
+  overflow: hidden;
+}
+@keyframes mko-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.mko-body {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow-y: auto;
+}
+.mko-body::-webkit-scrollbar,
+.mko-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+.mko-body::-webkit-scrollbar-thumb,
+.mko-scroll::-webkit-scrollbar-thumb {
+  background: var(--o-border-b);
+  border-radius: 4px;
+}
+
+.mko-title {
+  font-weight: bold;
+  color: var(--o-pri);
+  margin: 0;
+}
+.mko-sep {
+  height: 0;
+  border: none;
+  border-top: 1px solid var(--o-border);
+  margin: 2px 0;
+  flex: none;
+}
+.mko-cap {
+  font-size: 10.5px;
+  color: var(--o-text-dim);
+}
+.mko-small {
+  font-size: 9.5px;
+  color: var(--o-text-dim);
+}
+
+.mko-input {
+  height: 32px;
+  width: 100%;
+  font-family: var(--o-font);
+  font-size: 13.3px;
+  background: #000d12;
+  color: var(--o-text);
+  border: 1px solid var(--o-border);
+  border-radius: 3px;
+  padding: 4px 8px;
+  outline: none;
+}
+.mko-input:focus {
+  border-color: var(--o-pri);
+}
+.mko-input.mko-bad {
+  border-color: var(--o-red);
+}
+.mko-input::placeholder {
+  color: var(--o-text-dim);
+}
+select.mko-input {
+  font-size: 12px;
+  height: 30px;
+  padding: 2px 8px;
+  cursor: pointer;
+}
+select.mko-input:hover {
+  border-color: var(--o-border-b);
+}
+select.mko-input option {
+  background: #000d12;
+  color: var(--o-text);
+}
+
+.mko-btn {
+  height: 34px;
+  font-family: var(--o-font);
+  font-size: 12px;
+  background: transparent;
+  border-radius: 3px;
+  cursor: pointer;
+  white-space: nowrap;
+  padding: 0 10px;
+}
+.mko-btn:disabled {
+  cursor: default;
+}
+/* ▸ primary action (APPLY / SAVE / INITIALISE) */
+.mko-btn-pri {
+  color: var(--o-pri);
+  border: 1px solid var(--o-pri-dim);
+  font-weight: bold;
+}
+.mko-btn-pri:hover:not(:disabled) {
+  background: var(--o-pri-gho);
+  border-color: var(--o-pri);
+}
+/* CLOSE / CANCEL */
+.mko-btn-sec {
+  color: var(--o-text-med);
+  border: 1px solid var(--o-border);
+}
+.mko-btn-sec:hover:not(:disabled) {
+  color: var(--o-text);
+  border-color: var(--o-border-b);
+}
+.mko-row {
+  display: flex;
+  gap: 8px;
+}
+.mko-row > .mko-btn {
+  flex: 1 1 0;
+}
+
+/* toggles: plugin manager ON/OFF and settings toggles */
+.mko-toggle {
+  font-family: var(--o-font);
+  font-weight: bold;
+  font-size: 9.5px;
+  border-radius: 3px;
+  cursor: pointer;
+  background: transparent;
+  color: var(--o-text-dim);
+  border: 1px solid var(--o-border);
+}
+.mko-toggle:hover:not(:disabled) {
+  color: var(--o-text);
+  border-color: var(--o-border-b);
+}
+.mko-toggle.on-green {
+  background: #001a08;
+  color: var(--o-green);
+  border-color: var(--o-green-d);
+}
+.mko-toggle.on-green:hover {
+  background: #002010;
+  color: var(--o-green);
+  border-color: var(--o-green-d);
+}
+.mko-toggle.on-pri {
+  background: var(--o-pri-gho);
+  color: var(--o-pri);
+  border-color: var(--o-pri);
+}
+.mko-toggle:disabled {
+  cursor: default;
+}
+
+/* ── setup ──────────────────────────────────────────────────────────────── */
+.mko-os-btn {
+  flex: 1 1 0;
+  height: 32px;
+  font-family: var(--o-font);
+  font-size: 12px;
+  font-weight: bold;
+  border-radius: 3px;
+  cursor: pointer;
+  background: #000d12;
+  color: var(--o-text-dim);
+  border: 1px solid var(--o-border);
+}
+.mko-os-btn:hover {
+  color: var(--o-text);
+  border-color: var(--o-border-b);
+}
+.mko-os-btn.sel {
+  border: none;
+}
+
+/* ── customise ──────────────────────────────────────────────────────────── */
+.mko-voice {
+  flex: 1 1 60px;
+  height: 28px;
+  font-family: var(--o-font);
+  font-size: 10.5px;
+  font-weight: bold;
+  border-radius: 3px;
+  cursor: pointer;
+  background: transparent;
+  color: var(--o-text-med);
+  border: 1px solid var(--o-border);
+}
+.mko-voice:hover {
+  color: var(--o-text);
+  border-color: var(--o-border-b);
+}
+.mko-voice.sel {
+  background: var(--o-pri-gho);
+  color: var(--o-pri);
+  border-color: var(--o-pri);
+}
+.mko-mini-btn {
+  width: 64px;
+  height: 20px;
+  font-family: var(--o-font);
+  font-size: 9.5px;
+  font-weight: bold;
+  border-radius: 3px;
+  cursor: pointer;
+  background: transparent;
+  color: var(--o-text-med);
+  border: 1px solid var(--o-border);
+}
+.mko-mini-btn:hover {
+  color: var(--o-text);
+  border-color: var(--o-border-b);
+}
+.mko-wheel {
+  display: block;
+  cursor: pointer;
+  touch-action: none;
+}
+
+/* ── memory ─────────────────────────────────────────────────────────────── */
+.mko-scroll {
+  overflow-y: auto;
+  border: 1px solid var(--o-border);
+  border-radius: 3px;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  transition: height 180ms ease;
+}
+.mko-mem-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  max-height: 200px;
+  overflow: hidden;
+  transition: opacity 160ms ease, max-height 180ms ease, transform 160ms ease;
+}
+.mko-mem-row.leaving {
+  opacity: 0;
+  max-height: 0;
+  transform: translateX(12px);
+}
+.mko-mem-txt {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 10.5px;
+  color: var(--o-text);
+  overflow-wrap: anywhere;
+}
+.mko-mem-meta {
+  flex: none;
+  font-size: 9.5px;
+  color: var(--o-text-dim);
+  white-space: nowrap;
+  padding-top: 2px;
+}
+.mko-x {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  font-family: var(--o-font);
+  font-weight: bold;
+  font-size: 10.5px;
+  background: transparent;
+  color: var(--o-text-dim);
+  border: 1px solid var(--o-border);
+  border-radius: 3px;
+  cursor: pointer;
+}
+.mko-x:hover {
+  color: var(--o-red);
+  border-color: var(--o-red);
+}
+
+/* ── remote ─────────────────────────────────────────────────────────────── */
+.mko-qr {
+  width: 176px;
+  height: 176px;
+  background: white;
+  border-radius: 10px;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+  flex: none;
+  color: #888;
+  text-align: center;
+  font-size: 10.5px;
+}
+.mko-qr img {
+  width: 168px;
+  height: 168px;
+  image-rendering: pixelated;
+}
+.mko-qr.connected {
+  background: #001a0d;
+  color: #00ff88;
+  font-size: 72px;
+  font-weight: bold;
+}
+.mko-key {
+  font-size: 37px;
+  font-weight: bold;
+  color: var(--o-acc);
+  background: var(--o-panel2);
+  border: 1px solid var(--o-border-b);
+  border-radius: 8px;
+  padding: 6px 4px;
+  letter-spacing: 10px;
+  text-align: center;
+  user-select: all;
+}
+.mko-key.connected {
+  color: var(--o-green);
+  background: rgba(34, 197, 94, 0.08);
+  border: 2px solid rgba(34, 197, 94, 0.4);
+  letter-spacing: 4px;
+  user-select: none;
+}
+.mko-btn-remote-pri {
+  background: var(--o-panel);
+  color: var(--o-pri);
+  border: 1px solid var(--o-pri-dim);
+  border-radius: 5px;
+  font-weight: bold;
+  font-size: 10.5px;
+  height: 32px;
+}
+.mko-btn-remote-pri:hover {
+  background: var(--o-pri-gho);
+  border-color: var(--o-pri);
+}
+
+/* ── confirm ────────────────────────────────────────────────────────────── */
+.mko-confirm {
+  background: rgba(14, 3, 0, 0.98);
+  border-color: var(--o-acc);
+}
+.mko-btn-acc {
+  color: var(--o-acc);
+  border: 1px solid var(--o-acc);
+  font-weight: bold;
+  height: 32px;
+}
+.mko-btn-acc:hover {
+  background: rgba(255, 107, 0, 0.16);
+}
